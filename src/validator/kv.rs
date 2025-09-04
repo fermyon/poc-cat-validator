@@ -21,17 +21,20 @@ impl KvValidator {
             //todo!: if value is None, should we block it
             return subject_required;
         }
-        if self.blocked_data.any_subjects {
-            return self.blocked_data.subjects.contains(&value.clone().unwrap());
+        if !self.blocked_data.any_subjects {
+            return false;
         }
-        false
+        self.blocked_data
+            .subjects
+            .binary_search(&value.clone().unwrap())
+            .is_ok()
     }
 
     pub fn is_country_blocked(&self, value: &String) -> bool {
-        if self.blocked_data.any_countries {
-            return self.blocked_data.countries.contains(value);
+        if !self.blocked_data.any_countries {
+            return false;
         }
-        false
+        self.blocked_data.countries.binary_search(value).is_ok()
     }
 
     pub fn is_ip_blocked_by_asn(&self, value: &String) -> bool {
@@ -63,6 +66,6 @@ impl KvValidator {
         if !self.blocked_data.any_user_agents {
             return false;
         }
-        self.blocked_data.user_agents.contains(value)
+        self.blocked_data.user_agents.binary_search(value).is_ok()
     }
 }
