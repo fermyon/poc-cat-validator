@@ -1,6 +1,6 @@
 use std::net::IpAddr;
 
-use anyhow::bail;
+use anyhow::Error;
 use common_access_token::cat_keys;
 
 use crate::validator::{Convert, Validate};
@@ -16,7 +16,7 @@ impl Validate for CatNipValidator {
 
     fn validate(&self, claim: Option<&common_access_token::CborValue>) -> anyhow::Result<()> {
         let Ok(ip): Result<IpAddr, _> = self.client_ip.parse() else {
-            bail!("Invalid IP address received");
+            return Err(Error::msg("Invalid IP address received"));
         };
         if claim.is_none() {
             return Ok(());
@@ -31,12 +31,12 @@ impl Validate for CatNipValidator {
                     super::NetworkAddress::IPv4(ipv4_addr) => ipv4_addr.eq(&ip),
                     super::NetworkAddress::IPv6Prefix(ip_net) => ip_net.contains(&ip),
                     super::NetworkAddress::IPv6(ipv6_addr) => ipv6_addr.eq(&ip),
-                    super::NetworkAddress::ASN(_) => todo!(),
+                    super::NetworkAddress::ASN(_) => false,
                 });
                 if valid {
                     return Ok(());
                 }
-                bail!("IP address not allowed by token")
+                Err(Error::msg("Client IP address blocked according to CATNIP"))
             }
         }
     }

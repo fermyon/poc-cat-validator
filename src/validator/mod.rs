@@ -173,10 +173,7 @@ impl Convert for CborValue {
                 None
             }
 
-            _ => {
-                println!("Unknown or unsupported CBOR value");
-                None
-            }
+            _ => None,
         }
     }
 }

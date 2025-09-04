@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Error, Result};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
 use spin_sdk::{http::conversions::IntoBody, key_value::Store};
@@ -64,7 +64,12 @@ impl Persistence {
             .map(|asn| asn_resolver::resolve(asn));
 
         match try_join_all(futures).await {
-            Err(e) => bail!(format!("Error while resolving CIDRs for ASN. {}", e)),
+            Err(e) => {
+                return Err(Error::msg(format!(
+                    "Error while resolving CIDRs for ASN. {}",
+                    e
+                )))
+            }
             Ok(all_asns) => all.push_asns(all_asns),
         }
         store
@@ -105,7 +110,7 @@ impl TryFrom<&str> for BlockedClaimType {
             "COUNTRY" => Ok(BlockedClaimType::Country),
             "CIDR" => Ok(BlockedClaimType::Cidr),
             "USERAGENT" => Ok(BlockedClaimType::UserAgent),
-            _ => bail!("Invalid ClaimType provided"),
+            _ => return Err(Error::msg("Invalid ClaimType provided")),
         }
     }
 }

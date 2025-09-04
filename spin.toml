@@ -15,6 +15,8 @@ component = "cat-validator"
 [component.cat-validator]
 source = "target/wasm32-wasip1/release/cat_validator.wasm"
 allowed_outbound_hosts = []
+key_value_stores = ["default"]
+
 [component.cat-validator.build]
 command = "cargo build --target wasm32-wasip1 --release"
 watch = ["src/**/*.rs", "Cargo.toml"]

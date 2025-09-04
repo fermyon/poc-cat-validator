@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 
 use anyhow::{Context, Result};
 use common_access_token::{
-    cat_keys, catm, current_timestamp, Algorithm, CborValue, KeyId, RegisteredClaims, TokenBuilder,
+    cat_keys, catm, catu, catv, current_timestamp, uri_components, Algorithm, CborValue, KeyId,
+    RegisteredClaims, TokenBuilder,
 };
 use garde::Validate;
 use serde_json::json;
@@ -134,19 +135,14 @@ pub fn generate_test_token(req: Request, _: Params) -> Result<impl IntoResponse>
 
     let now = current_timestamp();
 
-    // Create a nested map for the token
-    let mut nested_map = BTreeMap::new();
+    let mut catu_components = BTreeMap::new();
+    catu_components.insert(uri_components::SCHEME, catu::exact_match("https"));
+    catu_components.insert(uri_components::HOST, catu::exact_match("my-streaming.api"));
+    catu_components.insert(uri_components::PATH, catu::prefix_match("/media"));
 
-    nested_map.insert(1, CborValue::Text("nested-text-value".to_string()));
-    nested_map.insert(2, CborValue::Integer(42));
-    nested_map.insert(3, CborValue::Bytes(vec![1, 2, 3, 4, 5]));
+    catu_components.insert(uri_components::EXTENSION, catu::exact_match(".mp4"));
 
-    // Create a second level nested map
-    let mut second_level_map = BTreeMap::new();
-    second_level_map.insert(1, CborValue::Text("second-level-text".to_string()));
-    second_level_map.insert(2, CborValue::Integer(99));
-
-    nested_map.insert(1, CborValue::Map(second_level_map));
+    let allowed_methods = vec!["GET"];
     let token = TokenBuilder::new()
         .algorithm(Algorithm::HmacSha256)
         .protected_key_id(KeyId::string("my-key-id"))
@@ -160,23 +156,26 @@ pub fn generate_test_token(req: Request, _: Params) -> Result<impl IntoResponse>
                 .with_issued_at(now)
                 .with_cti(model.token_identifier.as_bytes()),
         )
+        .custom_cbor(cat_keys::CATV, catv::create())
+        .custom_cbor(cat_keys::CATU, catu::create(catu_components))
+        .custom_array(cat_keys::CATM, catm::create(allowed_methods))
         .custom_array(
             cat_keys::CATGEOISO3166,
             catm::create(model.countries.iter().map(|c| c.as_str()).collect()),
         )
         .custom_map(cat_keys::CATH, {
             let mut ua_map = BTreeMap::new();
-            ua_map.insert(0, CborValue::Integer(3));
-            ua_map.insert(1, CborValue::Text("Mozilla".to_string()));
+            ua_map.insert(1, CborValue::Integer(3));
+            ua_map.insert(2, CborValue::Text("Mozilla".to_string()));
             let mut x_map = BTreeMap::new();
-            x_map.insert(0, CborValue::Integer(3));
-            x_map.insert(1, CborValue::Text("Lorem".to_string()));
+            x_map.insert(1, CborValue::Integer(0));
+            x_map.insert(2, CborValue::Text("Lorem".to_string()));
 
             let mut map = std::collections::BTreeMap::new();
-            map.insert(0, CborValue::Text("User-Agent".to_string()));
-            map.insert(1, CborValue::Map(ua_map));
-            map.insert(2, CborValue::Text("X-FWF-Custom-Header".to_string()));
-            map.insert(3, CborValue::Map(x_map));
+            map.insert(1, CborValue::Text("User-Agent".to_string()));
+            map.insert(2, CborValue::Map(ua_map));
+            map.insert(3, CborValue::Text("X-FWF-Custom-Header".to_string()));
+            map.insert(4, CborValue::Map(x_map));
             map
         })
         .sign(KEY.as_bytes())

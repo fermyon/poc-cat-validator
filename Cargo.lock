@@ -365,6 +365,7 @@ dependencies = [
  "compact_str",
  "garde_derive",
  "smallvec",
+ "url",
 ]
 
 [[package]]

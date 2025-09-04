@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::Error;
 use common_access_token::{cat_keys, CborValue};
 
 use crate::validator::{Convert, Validate};
@@ -21,7 +21,11 @@ impl Validate for CatCountryValidator {
                 }
                 c
             }
-            _ => bail!("Invalid format for CATGEOISO3166 was expecting an Array"),
+            _ => {
+                return Err(Error::msg(
+                    "Invalid format for CATGEOISO3166 was expecting an Array",
+                ))
+            }
         };
         match allowed_countries
             .iter()
@@ -31,7 +35,11 @@ impl Validate for CatCountryValidator {
             .contains(&self.country.to_uppercase().trim().to_string())
         {
             true => Ok(()), // country in granted by claim
-            false => bail!("Request origin not granted by claim (CATGEOISO3166)"),
+            false => {
+                return Err(Error::msg(
+                    "Request origin not granted by claim (CATGEOISO3166)",
+                ))
+            }
         }
     }
 }

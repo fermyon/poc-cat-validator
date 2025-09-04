@@ -1,5 +1,5 @@
 use crate::validator::Validate;
-use anyhow::{bail, Result};
+use anyhow::{Error, Result};
 use common_access_token::{cat_keys, CborValue};
 
 pub struct CatVersionValidator {}
@@ -13,11 +13,11 @@ impl Validate for CatVersionValidator {
         match claim {
             Some(CborValue::Integer(v)) => {
                 if v != &1 {
-                    bail!("Invalid CAT version specified as part of CATV");
+                    return Err(Error::msg("Invalid CAT version specified as part of CATV"));
                 }
                 Ok(())
             }
-            Some(_) => bail!("Invalid type value specified for CATV"),
+            Some(_) => Err(Error::msg("Invalid type value specified for CATV")),
             None => Ok(()),
         }
     }

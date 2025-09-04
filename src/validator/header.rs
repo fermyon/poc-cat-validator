@@ -1,4 +1,4 @@
-use anyhow::{bail, Error, Result};
+use anyhow::{Context, Error, Result};
 use std::collections::HashMap;
 
 use common_access_token::{cat_keys, CborValue};
@@ -30,14 +30,12 @@ impl Validate for CatHeaderValidator {
         let mut i = 1_i32;
         let mut j = 2_i32;
 
-        println!("Map has {} length trying to load at {} and {}", count, i, j);
-        map.keys().for_each(|k| println!("Key: {}", k));
-        while j + 1 <= count {
+        while j <= count {
             let header_name = map
                 .get(&i)
-                .expect(format!("Map has no entry at {}", i).as_str())
+                .with_context(|| format!("Map has no entry at {}", i))?
                 .as_string()
-                .expect(format!("Could not turn value at {} into string", i).as_str());
+                .with_context(|| format!("Could not turn value at {} into string", i))?;
             let header_value = map.get(&j).and_then(|hv| hv.as_match_kind());
             match header_value {
                 None => {
