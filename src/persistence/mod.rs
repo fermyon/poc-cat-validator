@@ -25,8 +25,9 @@ impl Persistence {
             None => BlockedData::new(),
         };
         for value in values {
-            if !all.contains(&kind, &value) {
-                all.push(&kind, value);
+            match all.contains(&kind, &value) {
+                Ok(_) => {}
+                Err(idx) => all.push(&kind, value, idx),
             }
         }
         all.optimize();
@@ -42,8 +43,9 @@ impl Persistence {
             None => BlockedData::new(),
         };
         for value in values {
-            if all.contains(&kind, &value) {
-                all.retain(&kind, |v| v != &value);
+            match all.contains(&kind, &value) {
+                Ok(idx) => all.remove_at(&kind, idx),
+                Err(_) => (),
             }
         }
         all.optimize();
@@ -188,12 +190,12 @@ impl BlockedData {
         self.asns.iter().any(|known| known.asn == asn)
     }
 
-    fn contains(&self, kind: &BlockedClaimType, value: &String) -> bool {
+    fn contains(&self, kind: &BlockedClaimType, value: &String) -> Result<usize, usize> {
         match kind {
-            BlockedClaimType::Subject => self.subjects.contains(value),
-            BlockedClaimType::Country => self.countries.contains(value),
-            BlockedClaimType::Cidr => self.cidrs.contains(value),
-            BlockedClaimType::UserAgent => self.user_agents.contains(value),
+            BlockedClaimType::Subject => self.subjects.binary_search(value),
+            BlockedClaimType::Country => self.countries.binary_search(value),
+            BlockedClaimType::Cidr => self.cidrs.binary_search(value),
+            BlockedClaimType::UserAgent => self.user_agents.binary_search(value),
         }
     }
 
@@ -201,27 +203,24 @@ impl BlockedData {
         self.asns.append(&mut new_asns);
     }
 
-    fn push(&mut self, kind: &BlockedClaimType, value: String) {
+    fn push(&mut self, kind: &BlockedClaimType, value: String, at_index: usize) {
         match kind {
-            BlockedClaimType::Subject => self.subjects.push(value),
-            BlockedClaimType::Country => self.countries.push(value),
-            BlockedClaimType::Cidr => self.cidrs.push(value),
-            BlockedClaimType::UserAgent => self.user_agents.push(value),
+            BlockedClaimType::Subject => self.subjects.insert(at_index, value),
+            BlockedClaimType::Country => self.countries.insert(at_index, value),
+            BlockedClaimType::Cidr => self.cidrs.insert(at_index, value),
+            BlockedClaimType::UserAgent => self.user_agents.insert(at_index, value),
         }
     }
 
     fn retain_asn(&mut self, asn: u32) {
         self.asns.retain(|found| found.asn != asn)
     }
-    fn retain<F>(&mut self, kind: &BlockedClaimType, predicate: F)
-    where
-        F: FnMut(&String) -> bool,
-    {
-        match kind {
-            BlockedClaimType::Subject => self.subjects.retain(predicate),
-            BlockedClaimType::Country => self.countries.retain(predicate),
-            BlockedClaimType::Cidr => self.cidrs.retain(predicate),
-            BlockedClaimType::UserAgent => self.user_agents.retain(predicate),
+    fn remove_at(&mut self, kind: &BlockedClaimType, idx: usize) {
+        _ = match kind {
+            BlockedClaimType::Subject => self.subjects.remove(idx),
+            BlockedClaimType::Country => self.countries.remove(idx),
+            BlockedClaimType::Cidr => self.cidrs.remove(idx),
+            BlockedClaimType::UserAgent => self.user_agents.remove(idx),
         }
     }
 }
