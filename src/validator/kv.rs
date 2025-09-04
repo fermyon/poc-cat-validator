@@ -21,14 +21,23 @@ impl KvValidator {
             //todo!: if value is None, should we block it
             return subject_required;
         }
-        self.blocked_data.sub.contains(&value.clone().unwrap())
+        if self.blocked_data.any_subjects {
+            return self.blocked_data.subjects.contains(&value.clone().unwrap());
+        }
+        false
     }
 
     pub fn is_country_blocked(&self, value: &String) -> bool {
-        self.blocked_data.countries.contains(value)
+        if self.blocked_data.any_countries {
+            return self.blocked_data.countries.contains(value);
+        }
+        false
     }
 
     pub fn is_ip_blocked_by_asn(&self, value: &String) -> bool {
+        if !self.blocked_data.any_asns {
+            return false;
+        }
         let actual_ip: IpAddr = value.parse().unwrap();
         self.blocked_data
             .asns
@@ -39,6 +48,9 @@ impl KvValidator {
             .any(|cidr| cidr.contains(&actual_ip))
     }
     pub fn is_ip_blocked(&self, value: &String) -> bool {
+        if !self.blocked_data.any_cidrs {
+            return false;
+        }
         let actual_ip: IpAddr = value.parse().unwrap();
         self.blocked_data
             .cidrs
@@ -48,6 +60,9 @@ impl KvValidator {
     }
 
     pub fn is_user_agent_blocked(&self, value: &String) -> bool {
+        if !self.blocked_data.any_user_agents {
+            return false;
+        }
         self.blocked_data.user_agents.contains(value)
     }
 }

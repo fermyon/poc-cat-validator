@@ -29,6 +29,7 @@ impl Persistence {
                 all.push(&kind, value);
             }
         }
+        all.optimize();
         store
             .set_json(KEY_BLOCKED, &all)
             .with_context(|| "Error storing value in block list")
@@ -45,6 +46,8 @@ impl Persistence {
                 all.retain(&kind, |v| v != &value);
             }
         }
+        all.optimize();
+
         store
             .set_json(KEY_BLOCKED, &all)
             .with_context(|| "Error storing value in block list")
@@ -72,6 +75,8 @@ impl Persistence {
             }
             Ok(all_asns) => all.push_asns(all_asns),
         }
+        all.optimize();
+
         store
             .set_json(KEY_BLOCKED, &all)
             .with_context(|| "Error while updating block data in KV")
@@ -88,6 +93,8 @@ impl Persistence {
                 all.retain_asn(value);
             }
         }
+        all.optimize();
+
         store
             .set_json(KEY_BLOCKED, &all)
             .with_context(|| "Error storing value in block list")
@@ -117,28 +124,64 @@ impl TryFrom<&str> for BlockedClaimType {
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockedData {
-    pub sub: Vec<String>,
+    pub any: bool,
+    pub any_asns: bool,
+    pub any_cidrs: bool,
+    pub any_countries: bool,
+    pub any_subjects: bool,
+    pub any_user_agents: bool,
+    pub asns: Vec<Asn>,
     pub countries: Vec<String>,
     pub cidrs: Vec<String>,
-    pub asns: Vec<Asn>,
+    pub subjects: Vec<String>,
     pub user_agents: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Eq)]
 pub struct Asn {
     pub asn: u32,
     pub cidrs: Vec<String>,
 }
 
+impl Ord for Asn {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        return self.asn.cmp(&other.asn);
+    }
+}
+
 impl BlockedData {
     fn new() -> Self {
         Self {
+            any: false,
+            any_asns: false,
+            any_cidrs: false,
+            any_countries: false,
+            any_subjects: false,
+            any_user_agents: false,
             asns: vec![],
-            sub: vec![],
             countries: vec![],
             cidrs: vec![],
+            subjects: vec![],
             user_agents: vec![],
         }
+    }
+
+    fn optimize(&mut self) {
+        self.asns.sort();
+        self.any_asns = self.asns.len() > 0;
+        self.countries.sort();
+        self.any_countries = self.countries.len() > 0;
+        self.cidrs.sort();
+        self.any_cidrs = self.cidrs.len() > 0;
+        self.subjects.sort();
+        self.any_subjects = self.subjects.len() > 0;
+        self.user_agents.sort();
+        self.any_user_agents = self.user_agents.len() > 0;
+        self.any = self.any_asns
+            || self.any_cidrs
+            || self.any_countries
+            || self.any_subjects
+            || self.any_user_agents;
     }
 
     fn contains_asn(&self, asn: u32) -> bool {
@@ -147,7 +190,7 @@ impl BlockedData {
 
     fn contains(&self, kind: &BlockedClaimType, value: &String) -> bool {
         match kind {
-            BlockedClaimType::Subject => self.sub.contains(value),
+            BlockedClaimType::Subject => self.subjects.contains(value),
             BlockedClaimType::Country => self.countries.contains(value),
             BlockedClaimType::Cidr => self.cidrs.contains(value),
             BlockedClaimType::UserAgent => self.user_agents.contains(value),
@@ -160,7 +203,7 @@ impl BlockedData {
 
     fn push(&mut self, kind: &BlockedClaimType, value: String) {
         match kind {
-            BlockedClaimType::Subject => self.sub.push(value),
+            BlockedClaimType::Subject => self.subjects.push(value),
             BlockedClaimType::Country => self.countries.push(value),
             BlockedClaimType::Cidr => self.cidrs.push(value),
             BlockedClaimType::UserAgent => self.user_agents.push(value),
@@ -175,7 +218,7 @@ impl BlockedData {
         F: FnMut(&String) -> bool,
     {
         match kind {
-            BlockedClaimType::Subject => self.sub.retain(predicate),
+            BlockedClaimType::Subject => self.subjects.retain(predicate),
             BlockedClaimType::Country => self.countries.retain(predicate),
             BlockedClaimType::Cidr => self.cidrs.retain(predicate),
             BlockedClaimType::UserAgent => self.user_agents.retain(predicate),
