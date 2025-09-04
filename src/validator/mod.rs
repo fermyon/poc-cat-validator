@@ -111,7 +111,7 @@ impl Convert for CborValue {
                 _ => None,
             };
         }
-        return None;
+        None
     }
 
     fn as_network_addresses(&self) -> Option<Vec<NetworkAddress>> {
@@ -123,7 +123,7 @@ impl Convert for CborValue {
                     .collect(),
             );
         }
-        return None;
+        None
     }
 
     fn as_network_address(&self) -> Option<NetworkAddress> {
@@ -133,13 +133,13 @@ impl Convert for CborValue {
                 let Ok(addr): Result<[u8; 16], _> = b.as_slice().try_into() else {
                     return None;
                 };
-                return Some(NetworkAddress::IPv6(Ipv6Addr::from(addr)));
+                Some(NetworkAddress::IPv6(Ipv6Addr::from(addr)))
             }
             CborValue::Bytes(ref b) if b.len() == 4 => {
                 let Ok(addr): Result<[u8; 4], _> = b.as_slice().try_into() else {
                     return None;
                 };
-                return Some(NetworkAddress::IPv4(Ipv4Addr::from(addr)));
+                Some(NetworkAddress::IPv4(Ipv4Addr::from(addr)))
             }
             CborValue::Array(ref arr) if arr.len() == 2 => {
                 if let (CborValue::Integer(len), CborValue::Bytes(ref prefix_bytes)) =

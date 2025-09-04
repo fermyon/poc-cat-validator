@@ -15,7 +15,7 @@ use crate::{
     validator::{Cat, CatValidationOptions},
 };
 // this could be wizened
-const KEY: &'static str = "my-super-fancy-and-secret-key";
+const KEY: &str = "my-super-fancy-and-secret-key";
 
 pub fn get_blocking_data(_: Request, _: Params) -> Result<impl IntoResponse> {
     let data = Persistence::get_blocking_data()?;

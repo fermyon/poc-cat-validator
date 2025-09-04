@@ -73,7 +73,7 @@ impl ValidateTokenRequestModel {
             method: self.method.clone(),
             issuer: self.issuer.clone(),
             client_ip: self.client_ip.clone(),
-            user_agent: user_agent,
+            user_agent,
             sync_validators: vec![
                 Box::new(CatVersionValidator {}),
                 Box::new(CatHeaderValidator {
@@ -109,7 +109,7 @@ impl From<ValidateTokenRequestModel> for CatValidationOptions {
             audience: value.audience.clone(),
             method: value.method.clone(),
             client_ip: value.client_ip.clone(),
-            user_agent: user_agent,
+            user_agent,
             issuer: value.issuer.clone(),
             sync_validators: vec![
                 Box::new(CatVersionValidator {}),

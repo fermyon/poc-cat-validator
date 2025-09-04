@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use anyhow::{Context, Error, Result};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
@@ -139,15 +141,21 @@ pub struct BlockedData {
     pub user_agents: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize, Clone, PartialEq, PartialOrd, Eq)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct Asn {
     pub asn: u32,
     pub cidrs: Vec<String>,
 }
 
+impl PartialOrd for Asn {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other)) // delegate to Ord
+    }
+}
+
 impl Ord for Asn {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        return self.asn.cmp(&other.asn);
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.asn.cmp(&other.asn) // compare by ASN only
     }
 }
 
@@ -170,15 +178,15 @@ impl BlockedData {
 
     fn optimize(&mut self) {
         self.asns.sort();
-        self.any_asns = self.asns.len() > 0;
+        self.any_asns = !self.asns.is_empty();
         self.countries.sort();
-        self.any_countries = self.countries.len() > 0;
+        self.any_countries = !self.countries.is_empty();
         self.cidrs.sort();
-        self.any_cidrs = self.cidrs.len() > 0;
+        self.any_cidrs = !self.cidrs.is_empty();
         self.subjects.sort();
-        self.any_subjects = self.subjects.len() > 0;
+        self.any_subjects = !self.subjects.is_empty();
         self.user_agents.sort();
-        self.any_user_agents = self.user_agents.len() > 0;
+        self.any_user_agents = !self.user_agents.is_empty();
         self.any = self.any_asns
             || self.any_cidrs
             || self.any_countries
