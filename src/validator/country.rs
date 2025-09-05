@@ -16,7 +16,7 @@ impl Validate for CatCountryValidator {
         let allowed_countries = match claim {
             None => return Ok(()), // no country claim present
             Some(CborValue::Array(c)) => {
-                if c.len() == 0 {
+                if c.is_empty() {
                     return Ok(()); // no countries explicitly mentioned in defined country claim
                 }
                 c
@@ -35,11 +35,9 @@ impl Validate for CatCountryValidator {
             .contains(&self.country.to_uppercase().trim().to_string())
         {
             true => Ok(()), // country in granted by claim
-            false => {
-                return Err(Error::msg(
-                    "Request origin not granted by claim (CATGEOISO3166)",
-                ))
-            }
+            false => Err(Error::msg(
+                "Request origin not granted by claim (CATGEOISO3166)",
+            )),
         }
     }
 }

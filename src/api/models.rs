@@ -62,7 +62,7 @@ impl ValidateTokenRequestModel {
             .headers
             .iter()
             .find(|k| k.0.eq_ignore_ascii_case("User-Agent"))
-            .and_then(|found| Some(found.1.clone()));
+            .map(|found| found.1.clone());
         let mut opts = CatValidationOptions {
             url: self.url.clone(),
             validate_expiration: self.validate_expiration.unwrap_or(true),
@@ -99,7 +99,7 @@ impl From<ValidateTokenRequestModel> for CatValidationOptions {
             .headers
             .iter()
             .find(|k| k.0.eq_ignore_ascii_case("User-Agent"))
-            .and_then(|found| Some(found.1.clone()));
+            .map(|found| found.1.clone());
         let mut opts = Self {
             url: value.url.clone(),
             validate_expiration: value.validate_expiration.unwrap_or(true),

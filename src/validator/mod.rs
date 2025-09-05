@@ -24,7 +24,7 @@ pub trait Validate {
 }
 
 #[allow(dead_code)]
-pub(self) trait Convert {
+trait Convert {
     fn as_str(&self) -> Option<&str>;
     fn as_string(&self) -> Option<String>;
     fn as_i64(&self) -> Option<i64>;
@@ -84,23 +84,15 @@ impl Convert for CborValue {
 
     fn as_i64(&self) -> Option<i64> {
         if let CborValue::Integer(value) = self {
-            return Some(value.clone());
+            return Some(*value);
         }
         None
     }
 
     fn as_match_kind(&self) -> Option<MatchKind> {
         if let CborValue::Map(value) = self {
-            let Some(operant) = value.get(&1) else {
-                return None;
-            };
-            let Some(match_value) = value.get(&2) else {
-                return None;
-            };
-
-            let Some(match_value) = match_value.as_string() else {
-                return None;
-            };
+            let operant = value.get(&1)?;
+            let match_value = value.get(&2)?.as_string()?;
 
             return match operant {
                 CborValue::Integer(0) => Some(MatchKind::Exact(match_value)),

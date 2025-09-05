@@ -7,7 +7,7 @@ use spin_sdk::{http::conversions::IntoBody, key_value::Store};
 
 use crate::asn_resolver;
 
-const KEY_BLOCKED: &'static str = "blocked";
+const KEY_BLOCKED: &str = "blocked";
 
 pub struct Persistence {}
 
@@ -67,8 +67,8 @@ impl Persistence {
 
         let futures = values
             .into_iter()
-            .filter(|asn| !all.contains_asn(asn.clone()))
-            .map(|asn| asn_resolver::resolve(asn));
+            .filter(|asn| !all.contains_asn(*asn))
+            .map(asn_resolver::resolve);
 
         match try_join_all(futures).await {
             Err(e) => {
@@ -121,7 +121,7 @@ impl TryFrom<&str> for BlockedClaimType {
             "COUNTRY" => Ok(BlockedClaimType::Country),
             "CIDR" => Ok(BlockedClaimType::Cidr),
             "USERAGENT" => Ok(BlockedClaimType::UserAgent),
-            _ => return Err(Error::msg("Invalid ClaimType provided")),
+            _ => Err(Error::msg("Invalid ClaimType provided")),
         }
     }
 }

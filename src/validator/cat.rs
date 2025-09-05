@@ -50,20 +50,19 @@ impl<'a> Cat<'a> {
                 if kv_validator.is_subject_blocked(&token.claims.registered.sub, true) {
                     return Err(Error::msg("Subject blocked"));
                 }
-                if opts.country.is_some() {
-                    if kv_validator.is_country_blocked(&opts.country.unwrap()) {
-                        return Err(Error::msg("Country or Region blocked"));
-                    }
+                if opts.country.is_some() && kv_validator.is_country_blocked(&opts.country.unwrap())
+                {
+                    return Err(Error::msg("Country or Region blocked"));
+                }
+
+                if opts.user_agent.is_some()
+                    && kv_validator.is_user_agent_blocked(&opts.user_agent.unwrap())
+                {
+                    return Err(Error::msg("User Agent blocked"));
                 }
 
                 if kv_validator.is_ip_blocked(&opts.client_ip) {
                     return Err(Error::msg("IP address is blocked"));
-                }
-
-                if opts.user_agent.is_some() {
-                    if kv_validator.is_user_agent_blocked(&opts.user_agent.unwrap()) {
-                        return Err(Error::msg("User Agent blocked"));
-                    }
                 }
             }
         }
@@ -82,11 +81,8 @@ impl<'a> Cat<'a> {
 
         for v in opts.sync_validators {
             let claim_value = token.claims.custom.get(v.get_claim_key());
-            match v.validate(claim_value) {
-                Err(validation_error) => {
-                    return Err(validation_error);
-                }
-                Ok(_) => (),
+            if let Err(validation_error) = v.validate(claim_value) {
+                return Err(validation_error);
             }
         }
         Ok(())
