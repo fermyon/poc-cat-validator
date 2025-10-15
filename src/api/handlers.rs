@@ -140,7 +140,10 @@ pub fn generate_test_token(req: Request, _: Params) -> Result<impl IntoResponse>
     catu_components.insert(uri_components::HOST, catu::exact_match("my-streaming.api"));
     catu_components.insert(uri_components::PATH, catu::prefix_match("/media"));
 
-    catu_components.insert(uri_components::EXTENSION, catu::exact_match(".mp4"));
+    catu_components.insert(
+        uri_components::EXTENSION,
+        catu::regex_match("\\.(m3u8|ts)$", vec![]),
+    );
 
     let allowed_methods = vec!["GET"];
     let token = TokenBuilder::new()
