@@ -1,6 +1,6 @@
 # Common Access Token Validator [POC]
 
-This repository contains a simple PoC to demonstrate common access token (CAT) validation. Although this implementation validates certain claims according to the [CAT Specification ()](), it's not implementing all aspects of the specification. 
+This repository contains a simple PoC to demonstrate common access token (CAT) validation. Although this implementation validates certain claims according to the CAT Specification (CAT-5007-B), it's not implementing all aspects of the specification. 
 
 **This implementation is not meant to be used in a production environment.**
 
