@@ -31,3 +31,18 @@ CAT validation checks the following claims:
 - `catv`
 - `catgetoiso3166`
 - `catnip` (Excluding ASN)
+
+
+## Running a perf test
+
+Need to have k6 installed.
+
+```bash
+export TOKEN=<cat token>
+export SIMPLE_URL=<simple validation url>
+export KV_URL=<kv validation url>
+
+cd perf-test
+npm install
+node run_and_report.js
+```
