@@ -7,7 +7,7 @@ const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
 // Configuration
 // ------------------------------
 const vusLevels = [1, 2, 8, 16, 32, 64, 128, 256, 512];
-const duration = "60s";
+const duration = "30s";
 const k6Script = "load_test.js";
 const tasks = ["simple_success_times", "simple_fail_times", "kv_success_times", "kv_fail_country_times"];
 const chartWidth = 500;
